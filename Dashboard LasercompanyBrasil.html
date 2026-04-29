@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laser Company Brasil — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0f4f8;
+      color: #1a1f36;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #1a1f36; color: white;
+      border-radius: 16px; padding: 22px 28px; margin-bottom: 20px;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-logo {
+      width: 46px; height: 46px; border-radius: 12px;
+      background: #4f6af0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0; overflow: hidden;
+    }
+    .header-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .campaign-name { font-size: 1.1rem; font-weight: 700; }
+    .campaign-sub  { font-size: 0.78rem; color: #8a95b0; margin-top: 3px; }
+    .header-right  { text-align: right; }
+    .update-label  { font-size: 0.73rem; color: #8a95b0; }
+    .update-date   { font-size: 0.92rem; font-weight: 600; color: #e2e8f0; margin-top: 2px; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .tab {
+      padding: 9px 26px; border-radius: 50px;
+      border: 2px solid #e2e8f0;
+      background: white; color: #6b7280;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+    }
+    .tab:hover { border-color: #94a3b8; color: #1a1f36; }
+    .tab.active { color: white; border-color: transparent; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
+
+    /* ── Cards ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px; margin-bottom: 24px;
+    }
+    .card {
+      background: white; border-radius: 14px; padding: 20px 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+    .card-icon  { font-size: 1.5rem; margin-bottom: 12px; }
+    .card-label {
+      font-size: 0.7rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 7px;
+    }
+    .card-value { font-size: 1.65rem; font-weight: 800; color: #1a1f36; line-height: 1; }
+    .card-sub   { font-size: 0.73rem; color: #b0b8c8; margin-top: 5px; }
+
+    /* ── Gráfico ── */
+    .chart-card {
+      background: white; border-radius: 14px; padding: 26px 24px 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07); margin-bottom: 24px;
+    }
+    .chart-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .chart-title { font-size: 1rem; font-weight: 700; color: #1a1f36; }
+    .chart-wrapper { position: relative; height: 270px; margin-top: 16px; }
+
+    /* Legenda / filtros do gráfico */
+    .chart-legend {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.78rem; font-weight: 600; color: #6b7280;
+    }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+    }
+    /* Botão de filtro (só aparece na aba Máquinas) */
+    .filter-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 50px; border: 2px solid;
+      font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 700;
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .filter-btn.ativo {
+      color: white;
+    }
+    .filter-btn.inativo {
+      background: white !important;
+      color: #9ca3af !important;
+      border-color: #e2e8f0 !important;
+    }
+    .filter-btn .dot {
+      width: 8px; height: 8px; border-radius: 2px;
+    }
+
+    /* ── Botões ── */
+    .action-section {
+      display: flex; justify-content: center; align-items: center;
+      gap: 14px; flex-wrap: wrap; padding: 4px 0 12px;
+    }
+    .btn-whatsapp {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #25d366; color: white; text-decoration: none;
+      border-radius: 50px; padding: 15px 36px;
+      font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 600;
+      box-shadow: 0 4px 18px rgba(37,211,102,0.38);
+      transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-whatsapp:hover {
+      background: #1eba58; transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(37,211,102,0.45);
+    }
+    .btn-upload {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #4f6af0; color: white;
+      border: none; border-radius: 50px; padding: 15px 30px;
+      font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 600;
+      box-shadow: 0 4px 18px rgba(79,106,240,0.38);
+      cursor: pointer; transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-upload:hover {
+      background: #3b55d4; transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(79,106,240,0.45);
+    }
+    .btn-pdf {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #dc2626; color: white;
+      border: none; border-radius: 50px; padding: 15px 30px;
+      font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 600;
+      box-shadow: 0 4px 18px rgba(220,38,38,0.35);
+      cursor: pointer; transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-pdf:hover {
+      background: #b91c1c; transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(220,38,38,0.45);
+    }
+    @media print { .action-section { display: none !important; } }
+
+    /* ── PDF Mode ── */
+    body.pdf-mode .tabs,
+    body.pdf-mode .action-section { display: none !important; }
+
+    body.pdf-mode .container {
+      max-width: 1040px;
+      width: 1040px;
+      padding: 8px 14px 10px;
+      background: #f0f4f8;
+    }
+    body.pdf-mode .header {
+      padding: 10px 16px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+    }
+    body.pdf-mode .campaign-name { font-size: 0.92rem; }
+    body.pdf-mode .campaign-sub  { font-size: 0.7rem; }
+    body.pdf-mode .update-label  { font-size: 0.68rem; }
+    body.pdf-mode .update-date   { font-size: 0.82rem; }
+    body.pdf-mode .header-logo   { width: 36px; height: 36px; font-size: 17px; }
+    body.pdf-mode .cards-grid {
+      gap: 7px;
+      margin-bottom: 8px;
+    }
+    body.pdf-mode .card {
+      padding: 9px 8px;
+      border-radius: 8px;
+    }
+    body.pdf-mode .card-icon  { font-size: 1rem; margin-bottom: 4px; }
+    body.pdf-mode .card-value { font-size: 1.15rem; }
+    body.pdf-mode .card-label { font-size: 0.6rem; margin-bottom: 4px; }
+    body.pdf-mode .card-sub   { font-size: 0.62rem; }
+    body.pdf-mode .chart-card {
+      padding: 10px 14px 8px;
+      margin-bottom: 6px;
+      border-radius: 10px;
+    }
+    body.pdf-mode .chart-title  { font-size: 0.82rem; }
+    body.pdf-mode .chart-legend { margin-top: 5px; gap: 6px; }
+    body.pdf-mode .chart-wrapper { height: 155px; margin-top: 8px; }
+    body.pdf-mode .footer {
+      font-size: 0.6rem;
+      margin-top: 5px;
+      color: #9ca3af;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Footer ── */
+    .footer { text-align: center; font-size: 0.7rem; color: #c8cdd8; margin-top: 20px; }
+
+    /* ── Responsivo ── */
+    @media (max-width: 920px) {
+      .cards-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .header { flex-direction: column; align-items: flex-start; gap: 14px; }
+      .header-right { text-align: left; }
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid .card:last-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">📣</div>
+      <div>
+        <div class="campaign-name">Laser Company Brasil</div>
+        <div class="campaign-sub">Resultados da campanha</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">Último lead recebido</div>
+      <div class="update-date" id="updateDate">—</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-grupo="todas">Todas as campanhas</button>
+    <button class="tab" data-grupo="maquinas">Máquinas</button>
+    <button class="tab" data-grupo="franquias">Franquias</button>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <div class="card-label">Total de Leads</div>
+      <div class="card-value" id="totalLeads">—</div>
+      <div class="card-sub">acumulado</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📅</div>
+      <div class="card-label">Leads Hoje</div>
+      <div class="card-value" id="leadsHoje">—</div>
+      <div class="card-sub">no dia</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">💰</div>
+      <div class="card-label">Total Investido</div>
+      <div class="card-value" id="totalInvestido">—</div>
+      <div class="card-sub">na campanha</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">💳</div>
+      <div class="card-label">Saldo Restante</div>
+      <div class="card-value" id="saldoRestante">—</div>
+      <div class="card-sub" id="saldoSub">—</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <div class="card-label">Custo por Lead</div>
+      <div class="card-value" id="cpl">—</div>
+      <div class="card-sub">CPL médio</div>
+    </div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title" id="chartTitle">Leads por dia</div>
+    </div>
+    <div class="chart-legend" id="chartLegend"></div>
+    <div class="chart-wrapper">
+      <canvas id="leadsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Botões -->
+  <div class="action-section">
+    <a href="https://wa.me/5545998247530?text=Ol%C3%A1!%20Vi%20o%20dashboard%20e%20gostaria%20de%20conversar%20sobre%20a%20campanha."
+       class="btn-whatsapp" target="_blank" rel="noopener">
+      💬&nbsp; Falar com o gestor
+    </a>
+    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+      📂&nbsp; Atualizar dados
+    </button>
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="processarArquivo(event)">
+    <button class="btn-pdf" onclick="baixarPDF()">
+      📄&nbsp; Baixar em PDF
+    </button>
+  </div>
+
+  <div class="footer">
+    Dashboard gerado automaticamente · Dados atualizados em 28/04/2026
+  </div>
+
+</div>
+<script>
+Chart.register(ChartDataLabels);
+
+// ═══════════════════════════════════════════════════
+//  DADOS DAS CAMPANHAS
+// ═══════════════════════════════════════════════════
+const MAQUINAS = [
+  {
+    id: "quanta",
+    nome: "QUANTA",
+    cor: "#4f6af0",
+    grupo: "maquinas",
+    investimento: 708.09,
+    leads: [
+      { data: "2026-04-09", count: 3 },
+      { data: "2026-04-10", count: 4 },
+      { data: "2026-04-11", count: 3 },
+      { data: "2026-04-12", count: 3 },
+      { data: "2026-04-13", count: 4 },
+      { data: "2026-04-14", count: 4 },
+      { data: "2026-04-17", count: 2 },
+      { data: "2026-04-19", count: 1 },
+    ],
+  },
+  {
+    id: "ultracel",
+    nome: "ULTRACEL",
+    cor: "#7c3aed",
+    grupo: "maquinas",
+    investimento: 574.93,
+    leads: [
+      { data: "2026-04-09", count: 5 },
+      { data: "2026-04-10", count: 5 },
+      { data: "2026-04-11", count: 3 },
+      { data: "2026-04-12", count: 3 },
+      { data: "2026-04-13", count: 3 },
+      { data: "2026-04-14", count: 4 },
+      { data: "2026-04-15", count: 2 },
+      { data: "2026-04-16", count: 4 },
+      { data: "2026-04-17", count: 6 },
+      { data: "2026-04-18", count: 1 },
+      { data: "2026-04-19", count: 2 },
+    ],
+  },
+  {
+    id: "vydence",
+    nome: "VYDENCE",
+    cor: "#f97316",
+    grupo: "maquinas",
+    investimento: 257.17,
+    leads: [
+      { data: "2026-04-09", count: 1 },
+      { data: "2026-04-11", count: 2 },
+      { data: "2026-04-12", count: 1 },
+      { data: "2026-04-14", count: 1 },
+      { data: "2026-04-16", count: 3 },
+      { data: "2026-04-17", count: 1 },
+    ],
+  },
+  {
+    id: "franquias",
+    nome: "FRANQUIAS",
+    cor: "#059669",
+    grupo: "franquias",
+    investimento: 348.41,
+    leads: [
+      { data: "2026-04-10", count: 2 },
+      { data: "2026-04-11", count: 1 },
+      { data: "2026-04-16", count: 1 },
+    ],
+  },
+];
+
+const ORCAMENTO_GLOBAL = 1888.60;
+const MOEDA = "R$";
+
+// ═══════════════════════════════════════════════════
+//  CÁLCULOS
+// ═══════════════════════════════════════════════════
+function filtrarPorGrupo(grupo) {
+  if (grupo === "todas")     return MAQUINAS;
+  if (grupo === "maquinas")  return MAQUINAS.filter(m => m.grupo === "maquinas");
+  if (grupo === "franquias") return MAQUINAS.filter(m => m.grupo === "franquias");
+  return MAQUINAS;
+}
+
+function calcular(grupo) {
+  const lista = filtrarPorGrupo(grupo);
+
+  const hoje = new Date().toLocaleDateString("sv-SE");
+  const totalLeads = lista.reduce((s, m) => s + m.leads.reduce((ss, l) => ss + l.count, 0), 0);
+  const leadsHoje  = lista.reduce((s, m) => s + m.leads.filter(l => l.data === hoje).reduce((ss, l) => ss + l.count, 0), 0);
+  const investimento = grupo === "todas" ? ORCAMENTO_GLOBAL : lista.reduce((s, m) => s + m.investimento, 0);
+  const cpl = totalLeads > 0 ? investimento / totalLeads : 0;
+
+  // Todas as datas únicas ordenadas
+  const datas = [...new Set(lista.flatMap(m => m.leads.map(l => l.data)))].sort();
+  const labels = datas.map(d => d.split("-")[2]);
+
+  // Datasets por campanha (barras agrupadas por dia)
+  const datasets = lista.map(m => {
+    const porDia = Object.fromEntries(m.leads.map(l => [l.data, l.count]));
+    return {
+      label: m.nome,
+      data: datas.map(d => porDia[d] || 0),
+      backgroundColor: m.cor,
+      borderRadius: 4,
+      barPercentage: 0.7,
+      categoryPercentage: 0.85,
+    };
+  });
+
+  // Última data com lead
+  const ultimaData = datas[datas.length - 1] || hoje;
+  const [ano, mes, dia] = ultimaData.split("-");
+
+  return { totalLeads, leadsHoje, investimento, cpl, labels, datasets, dataFormatada: `${dia}/${mes}/${ano}` };
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDERIZAÇÃO
+// ═══════════════════════════════════════════════════
+let grafico = null;
+
+function moeda(v) {
+  return MOEDA + " " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderDashboard(grupo) {
+  const stats = calcular(grupo);
+
+  document.getElementById("updateDate").textContent    = stats.dataFormatada;
+  document.getElementById("totalLeads").textContent    = stats.totalLeads.toLocaleString("pt-BR");
+  document.getElementById("leadsHoje").textContent     = stats.leadsHoje.toLocaleString("pt-BR");
+  document.getElementById("totalInvestido").textContent = moeda(stats.investimento);
+  document.getElementById("cpl").textContent           = moeda(stats.cpl);
+
+  // Cor do total de leads conforme grupo
+  const coresGrupo = { todas: "#4f6af0", maquinas: "#4f6af0", franquias: "#059669" };
+  document.getElementById("totalLeads").style.color = coresGrupo[grupo] || "#4f6af0";
+  document.getElementById("cpl").style.color = "#d97706";
+
+  // Saldo
+  document.getElementById("saldoRestante").textContent = moeda(0);
+  document.getElementById("saldoRestante").style.color = "#9ca3af";
+  document.getElementById("saldoSub").textContent = "orçamento encerrado";
+
+  // Título do gráfico
+  const titulos = { todas: "Leads por dia — Todas as campanhas", maquinas: "Leads por dia — Máquinas (QUANTA / ULTRACEL / VYDENCE)", franquias: "Leads por dia — Franquias" };
+  document.getElementById("chartTitle").textContent = titulos[grupo];
+
+  // Legenda / botões de filtro do gráfico
+  const legenda = document.getElementById("chartLegend");
+  const lista = filtrarPorGrupo(grupo);
+
+  if (grupo === "maquinas") {
+    // Botões clicáveis para filtrar por máquina
+    legenda.innerHTML = lista.map((m, i) =>
+      `<button class="filter-btn ativo" data-index="${i}"
+         style="background:${m.cor}; border-color:${m.cor}; color:white;">
+         <span class="dot" style="background:rgba(255,255,255,0.7)"></span>
+         ${m.nome}
+       </button>`
+    ).join("");
+
+    legenda.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.index);
+        const visivel = grafico.isDatasetVisible(idx);
+        grafico.setDatasetVisibility(idx, !visivel);
+        grafico.update();
+        if (!visivel) {
+          const cor = lista[idx].cor;
+          btn.classList.replace("inativo", "ativo");
+          btn.style.background = cor;
+          btn.style.borderColor = cor;
+          btn.style.color = "white";
+          btn.querySelector(".dot").style.background = "rgba(255,255,255,0.7)";
+        } else {
+          btn.classList.replace("ativo", "inativo");
+        }
+      });
+    });
+  } else {
+    // Legenda simples para as demais abas
+    legenda.innerHTML = lista.map(m =>
+      `<div class="legend-item">
+         <div class="legend-dot" style="background:${m.cor}"></div>
+         ${m.nome}
+       </div>`
+    ).join("");
+  }
+
+  // Gráfico
+  if (grafico) grafico.destroy();
+  const ctx = document.getElementById("leadsChart").getContext("2d");
+  grafico = new Chart(ctx, {
+    type: "bar",
+    data: { labels: stats.labels, datasets: stats.datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `  ${ctx.dataset.label}: ${ctx.raw} lead${ctx.raw !== 1 ? "s" : ""}`,
+          },
+        },
+        datalabels: {
+          display: ctx => ctx.raw > 0,
+          anchor: "end",
+          align: "top",
+          offset: 2,
+          font: { family: "Inter", size: 10, weight: "700" },
+          color: "#374151",
+          formatter: v => v,
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: "Inter", size: 11, weight: "500" }, color: "#6b7280" },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: "#f0f2f5" },
+          ticks: { font: { family: "Inter", size: 11 }, color: "#9ca3af", precision: 0 },
+        },
+      },
+    },
+  });
+
+  // Tabs: estilo ativo
+  document.querySelectorAll(".tab").forEach(btn => {
+    const ativo = btn.dataset.grupo === grupo;
+    btn.classList.toggle("active", ativo);
+    const cores = { todas: "#1a1f36", maquinas: "#4f6af0", franquias: "#059669" };
+    btn.style.background = ativo ? (cores[grupo] || "#1a1f36") : "";
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  INICIALIZAÇÃO
+// ═══════════════════════════════════════════════════
+let grupoAtivo = "todas";
+
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    grupoAtivo = btn.dataset.grupo;
+    renderDashboard(grupoAtivo);
+  });
+});
+
+renderDashboard(grupoAtivo);
+
+// ═══════════════════════════════════════════════════
+//  UPLOAD E ATUALIZAÇÃO DE DADOS
+// ═══════════════════════════════════════════════════
+function processarArquivo(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = "";
+
+  const ext = file.name.split(".").pop().toLowerCase();
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    let rows;
+    try {
+      if (ext === "csv") {
+        rows = parsearCSV(e.target.result);
+      } else {
+        const wb = XLSX.read(e.target.result, { type: "binary" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      }
+      atualizarDados(rows);
+    } catch(err) {
+      mostrarNotificacao("❌ Erro ao ler o arquivo. Verifique o formato.", "#dc2626");
+    }
+  };
+
+  if (ext === "csv") {
+    reader.readAsText(file, "UTF-8");
+  } else {
+    reader.readAsBinaryString(file);
+  }
+}
+
+function parsearCSV(texto) {
+  // Remove BOM
+  texto = texto.replace(/^﻿/, "");
+  // Detecta separador: ; ou ,
+  const sep = texto.split("\n")[0].includes(";") ? ";" : ",";
+  return texto.split(/\r?\n/).map(linha => {
+    const campos = [];
+    let dentro = false, campo = "";
+    for (let i = 0; i < linha.length; i++) {
+      if (linha[i] === '"') { dentro = !dentro; }
+      else if (linha[i] === sep && !dentro) { campos.push(campo.trim()); campo = ""; }
+      else { campo += linha[i]; }
+    }
+    campos.push(campo.trim());
+    return campos;
+  }).filter(r => r.some(c => c !== ""));
+}
+
+function acharColuna(headers, termos) {
+  return headers.findIndex(h =>
+    termos.some(t => String(h).toLowerCase().includes(t.toLowerCase()))
+  );
+}
+
+function idCampanha(nome) {
+  const n = String(nome).toUpperCase();
+  if (n.includes("QUANTA"))   return "quanta";
+  if (n.includes("ULTRACEL")) return "ultracel";
+  if (n.includes("VYDENCE"))  return "vydence";
+  if (n.includes("FRANQUIA")) return "franquias";
+  return null;
+}
+
+function parsearData(raw) {
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+    const [d, m, a] = s.split("/");
+    return `${a}-${m}-${d}`;
+  }
+  if (/^\d{2}\/\d{2}\/\d{2}$/.test(s)) {
+    const [d, m, a] = s.split("/");
+    return `20${a}-${m}-${d}`;
+  }
+  return null;
+}
+
+function parsearNumero(raw) {
+  // Suporta 1.234,56 e 1,234.56
+  let s = String(raw).replace(/[^\d.,]/g, "");
+  if (s.includes(",") && s.includes(".")) {
+    if (s.indexOf(",") > s.indexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
+    else s = s.replace(/,/g, "");
+  } else if (s.includes(",")) {
+    s = s.replace(",", ".");
+  }
+  return parseFloat(s) || 0;
+}
+
+function atualizarDados(rows) {
+  if (!rows || rows.length < 2) {
+    mostrarNotificacao("❌ Arquivo vazio ou inválido.", "#dc2626");
+    return;
+  }
+
+  const headers = rows[0].map(h => String(h));
+  const iCampanha = acharColuna(headers, ["campanha","campaign","nome da campanha","nome"]);
+  const iValor    = acharColuna(headers, ["valor gasto","amount spent","gasto","investimento","valor"]);
+  const iLeads    = acharColuna(headers, ["leads","resultados","conversões","conversoes"]);
+  const iData     = acharColuna(headers, ["data","date","dia","período","periodo"]);
+
+  if (iCampanha === -1 || iValor === -1) {
+    mostrarNotificacao("❌ Colunas de campanha e valor não encontradas.", "#dc2626");
+    return;
+  }
+
+  const acumulado = {};
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const id = idCampanha(row[iCampanha]);
+    if (!id) continue;
+
+    if (!acumulado[id]) acumulado[id] = { investimento: 0, leadsPorDia: {} };
+    acumulado[id].investimento += parsearNumero(row[iValor]);
+
+    if (iLeads !== -1) {
+      const qtd = parseInt(row[iLeads]) || 0;
+      if (iData !== -1) {
+        const dt = parsearData(row[iData]);
+        if (dt && qtd > 0) {
+          acumulado[id].leadsPorDia[dt] = (acumulado[id].leadsPorDia[dt] || 0) + qtd;
+        }
+      }
+    }
+  }
+
+  let atualizados = 0;
+  MAQUINAS.forEach(m => {
+    const d = acumulado[m.id];
+    if (!d) return;
+    m.investimento = d.investimento;
+    const dias = Object.entries(d.leadsPorDia);
+    if (dias.length > 0) {
+      m.leads = dias.map(([data, count]) => ({ data, count }));
+    }
+    atualizados++;
+  });
+
+  if (atualizados === 0) {
+    mostrarNotificacao("❌ Nenhuma campanha reconhecida (esperado: QUANTA, ULTRACEL, VYDENCE, FRANQUIA).", "#dc2626");
+    return;
+  }
+
+  renderDashboard(grupoAtivo);
+  mostrarNotificacao(`✅ ${atualizados} campanha(s) atualizada(s) com sucesso!`, "#059669");
+}
+
+function baixarPDF() {
+  var btn = document.querySelector(".btn-pdf");
+  btn.disabled = true;
+  btn.innerHTML = "⏳&nbsp; Gerando PDF...";
+
+  // Overlay cobre a tela durante a captura
+  var overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:#f0f4f8;z-index:9998;display:flex;align-items:center;justify-content:center;";
+  overlay.innerHTML = "<div style='font-family:Inter,sans-serif;font-size:1rem;font-weight:600;color:#1a1f36;'>⏳ Gerando PDF, aguarde...</div>";
+  document.body.appendChild(overlay);
+
+  var grupoOriginal = grupoAtivo;
+  var el = document.querySelector(".container");
+
+  var opts = {
+    margin: [5, 8, 5, 8],
+    image: { type: "jpeg", quality: 0.97 },
+    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: "#f0f4f8" },
+    jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+  };
+
+  function ajustarGrafico(modo) {
+    if (!grafico) return;
+    var p = modo === "pdf";
+    grafico.options.plugins.datalabels.font.size = p ? 8  : 10;
+    grafico.options.layout.padding.top           = p ? 12 : 24;
+    grafico.options.scales.x.ticks.font.size     = p ? 8  : 11;
+    grafico.options.scales.y.ticks.font.size     = p ? 8  : 11;
+    grafico.update();
+    grafico.resize();
+  }
+
+  function restaurar() {
+    document.body.classList.remove("pdf-mode");
+    ajustarGrafico("normal");
+    grupoAtivo = grupoOriginal;
+    renderDashboard(grupoOriginal);
+    if (document.body.contains(overlay)) document.body.removeChild(overlay);
+    btn.disabled = false;
+    btn.innerHTML = "📄&nbsp; Baixar em PDF";
+  }
+
+  // ── Página 1: Máquinas ──
+  grupoAtivo = "maquinas";
+  renderDashboard("maquinas");
+  document.body.classList.add("pdf-mode");
+  ajustarGrafico("pdf");
+
+  setTimeout(function() {
+    html2pdf()
+      .set(opts)
+      .from(el)
+      .toPdf()
+      .get("pdf")                          // obtém o objeto jsPDF criado internamente
+      .then(function(pdf) {
+        pdf.addPage();                     // adiciona a 2ª página em branco
+
+        // ── Página 2: Franquias ──
+        document.body.classList.remove("pdf-mode");
+        grupoAtivo = "franquias";
+        renderDashboard("franquias");
+        document.body.classList.add("pdf-mode");
+        ajustarGrafico("pdf");
+
+        // Aguarda o gráfico de franquias renderizar
+        return new Promise(function(resolve) {
+          setTimeout(function() {
+            html2pdf()
+              .set(opts)
+              .from(el)
+              .toCanvas()
+              .get("canvas")
+              .then(function(canvas) {
+                var pdfW = pdf.internal.pageSize.getWidth();
+                var pdfH = pdf.internal.pageSize.getHeight();
+                var xMg = 8, yMg = 5;
+                var imgW = pdfW - xMg * 2;
+                var imgH = Math.min((canvas.height / canvas.width) * imgW, pdfH - yMg * 2);
+                pdf.addImage(canvas.toDataURL("image/jpeg", 0.97), "JPEG", xMg, yMg, imgW, imgH);
+                pdf.save("Dashboard_LaserCompanyBrasil.pdf");
+                restaurar();
+                resolve();
+              })
+              .catch(function(e) { console.error("Pág.2:", e); restaurar(); resolve(); });
+          }, 500);
+        });
+      })
+      .catch(function(e) { console.error("Pág.1:", e); restaurar(); });
+  }, 500);
+}
+
+function mostrarNotificacao(msg, cor = "#059669") {
+  const n = document.createElement("div");
+  n.textContent = msg;
+  n.style.cssText = `
+    position:fixed; top:22px; right:22px; z-index:9999;
+    background:${cor}; color:white; padding:14px 22px;
+    border-radius:12px; font-weight:600; font-size:0.88rem;
+    box-shadow:0 4px 20px rgba(0,0,0,0.22);
+    max-width:340px; line-height:1.4;
+    animation:slideIn 0.3s ease;
+  `;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 3500);
+}
+</script>
+</body>
+</html>
