@@ -5,7 +5,7 @@ Dashboard estático em HTML puro para acompanhamento de resultados de campanhas 
 ## Estrutura
 
 ```
-index.html   → único arquivo do projeto; contém HTML, CSS e JS inline
+Dashboard Forms ADS.html   → único arquivo do projeto; contém HTML, CSS e JS inline
 ```
 
 ## O que o dashboard faz
