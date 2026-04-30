@@ -226,23 +226,6 @@
       .cards-grid .card:last-child { grid-column: 1 / -1; }
     }
 
-    /* ── Saldo editável ── */
-    #cardSaldo.editavel {
-      cursor: pointer;
-      border: 2px dashed #c7d2fe;
-    }
-    #cardSaldo.editavel:hover {
-      border-color: #4f6af0;
-      background: #f5f7ff;
-    }
-    .card-edit-hint {
-      display: none;
-      font-size: 0.68rem;
-      color: #a5b4fc;
-      margin-top: 6px;
-    }
-    #cardSaldo.editavel .card-edit-hint { display: block; }
-
     /* ── Modal saldo ── */
     #modalSaldo {
       display: none;
@@ -359,7 +342,6 @@
       <div class="card-label">Saldo Restante</div>
       <div class="card-value" id="saldoRestante">—</div>
       <div class="card-sub" id="saldoSub">—</div>
-      <div class="card-edit-hint">✏️ clique para editar</div>
     </div>
     <div class="card">
       <div class="card-icon">📊</div>
@@ -578,7 +560,7 @@ function renderDashboard(grupo) {
 
   const cardSaldo = document.getElementById("cardSaldo");
   if (grupo === "todas") {
-    cardSaldo.classList.add("editavel");
+    cardSaldo.style.cursor = "pointer";
     if (saldoManual !== null) {
       document.getElementById("saldoRestante").textContent = moeda(saldoManual);
       document.getElementById("saldoRestante").style.color = saldoManual > 0 ? "#059669" : "#dc2626";
@@ -589,7 +571,7 @@ function renderDashboard(grupo) {
       document.getElementById("saldoSub").textContent = "clique para definir";
     }
   } else {
-    cardSaldo.classList.remove("editavel");
+    cardSaldo.style.cursor = "";
     document.getElementById("saldoRestante").textContent = moeda(0);
     document.getElementById("saldoRestante").style.color = "#9ca3af";
     document.getElementById("saldoSub").textContent = "orçamento encerrado";
