@@ -431,7 +431,29 @@ const MAQUINAS = [
   },
 ];
 
-const ORCAMENTO_GLOBAL = 2187.26;
+// ═══════════════════════════════════════════════════
+//  PERSISTÊNCIA
+// ═══════════════════════════════════════════════════
+function salvarLocalStorage() {
+  localStorage.setItem("LASER_DASH_DADOS", JSON.stringify(MAQUINAS));
+}
+
+function carregarLocalStorage() {
+  const salvos = localStorage.getItem("LASER_DASH_DADOS");
+  if (salvos) {
+    try {
+      const dados = JSON.parse(salvos);
+      MAQUINAS.forEach(m => {
+        const s = dados.find(x => x.id === m.id);
+        if (s) {
+          m.investimento = s.investimento;
+          m.leads = s.leads;
+        }
+      });
+    } catch(e) { console.error("Erro ao carregar dados salvos", e); }
+  }
+}
+
 const MOEDA = "R$";
 
 // ═══════════════════════════════════════════════════
@@ -450,7 +472,7 @@ function calcular(grupo) {
   const hoje = new Date().toLocaleDateString("sv-SE");
   const totalLeads = lista.reduce((s, m) => s + m.leads.reduce((ss, l) => ss + l.count, 0), 0);
   const leadsHoje  = lista.reduce((s, m) => s + m.leads.filter(l => l.data === hoje).reduce((ss, l) => ss + l.count, 0), 0);
-  const investimento = grupo === "todas" ? ORCAMENTO_GLOBAL : lista.reduce((s, m) => s + m.investimento, 0);
+  const investimento = lista.reduce((s, m) => s + m.investimento, 0);
   const cpl = totalLeads > 0 ? investimento / totalLeads : 0;
 
   // Todas as datas únicas ordenadas
@@ -591,6 +613,8 @@ document.querySelectorAll(".tab").forEach(btn => {
     renderDashboard(grupoAtivo);
   });
 });
+
+carregarLocalStorage(); // Carrega dados salvos
 renderDashboard(grupoAtivo);
 
 // ═══════════════════════════════════════════════════
@@ -751,6 +775,7 @@ function atualizarDados(rows) {
   }
 
   renderDashboard(grupoAtivo);
+  salvarLocalStorage(); // Salva no navegador
   mostrarNotificacao(`✅ Sucesso! ${totalLeadsEncontrados} leads processados.`, "#059669");
 }
 
