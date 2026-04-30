@@ -394,30 +394,6 @@ const MAQUINAS = [
     ],
   },
   {
-    id: "lavieen",
-    nome: "LAVIEEN",
-    cor: "#ec4899",
-    grupo: "maquinas",
-    investimento: 0,
-    leads: [],
-  },
-  {
-    id: "etherea",
-    nome: "ETHEREA",
-    cor: "#10b981",
-    grupo: "maquinas",
-    investimento: 0,
-    leads: [],
-  },
-  {
-    id: "zye",
-    nome: "ZYE",
-    cor: "#f59e0b",
-    grupo: "maquinas",
-    investimento: 0,
-    leads: [],
-  },
-  {
     id: "franquias",
     nome: "FRANQUIAS",
     cor: "#059669",
@@ -674,9 +650,6 @@ function idCampanha(nome) {
   if (n.includes("QUANTA")) return "quanta";
   if (n.includes("ULTRACEL")) return "ultracel";
   if (n.includes("VYDENCE")) return "vydence";
-  if (n.includes("LAVIEEN") || n.includes("LAVIE")) return "lavieen";
-  if (n.includes("ETHEREA")) return "etherea";
-  if (n.includes("ZYE")) return "zye";
   if (n.includes("FRANQUIA") || n.includes("FRANQUEADO") || n.includes("LC -") || n.includes("GEORREFERENCIADO")) return "franquias";
   return null;
 }
