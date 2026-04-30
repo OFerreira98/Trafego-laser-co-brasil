@@ -564,17 +564,16 @@ function renderDashboard(grupo) {
     if (saldoManual !== null) {
       document.getElementById("saldoRestante").textContent = moeda(saldoManual);
       document.getElementById("saldoRestante").style.color = saldoManual > 0 ? "#059669" : "#dc2626";
-      document.getElementById("saldoSub").textContent = "saldo manual";
     } else {
       document.getElementById("saldoRestante").textContent = "—";
       document.getElementById("saldoRestante").style.color = "#9ca3af";
-      document.getElementById("saldoSub").textContent = "clique para definir";
     }
+    document.getElementById("saldoSub").textContent = "Dados com atraso de até 24h (API Facebook). Pode haver divergência com o Gerenciador.";
   } else {
     cardSaldo.style.cursor = "";
     document.getElementById("saldoRestante").textContent = moeda(0);
     document.getElementById("saldoRestante").style.color = "#9ca3af";
-    document.getElementById("saldoSub").textContent = "orçamento encerrado";
+    document.getElementById("saldoSub").textContent = "Dados com atraso de até 24h (API Facebook). Pode haver divergência com o Gerenciador.";
   }
 
   const titulos = { todas: "Leads por dia — Todas as campanhas", maquinas: "Leads por dia — Máquinas", franquias: "Leads por dia — Franquias" };
