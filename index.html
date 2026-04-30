@@ -213,7 +213,7 @@
     }
 
     /* ── Footer ── */
-    .footer { text-align: center; font-size: 0.7rem; color: #c8cdd8; margin-top: 20px; }
+    .footer { text-align: center; font-size: 0.7rem; color: #9ca3af; margin-top: 20px; }
 
     /* ── Responsivo ── */
     @media (max-width: 920px) {
@@ -225,9 +225,20 @@
       .cards-grid { grid-template-columns: repeat(2, 1fr); }
       .cards-grid .card:last-child { grid-column: 1 / -1; }
     }
+
+    /* ── Notificação ── */
+    #notificacao {
+      position: fixed; top: 20px; right: 20px;
+      padding: 12px 24px; border-radius: 10px;
+      color: white; font-weight: 600; font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-100px); transition: transform 0.3s ease;
+      z-index: 10000;
+    }
   </style>
 </head>
 <body>
+<div id="notificacao"></div>
 <div class="container">
 
   <!-- Header -->
@@ -313,10 +324,11 @@
   </div>
 
   <div class="footer">
-    Dashboard gerado automaticamente · Dados atualizados em 28/04/2026
+    Dashboard gerado automaticamente • Laser Company Brasil
   </div>
 
 </div>
+
 <script>
 Chart.register(ChartDataLabels);
 
@@ -329,16 +341,18 @@ const MAQUINAS = [
     nome: "QUANTA",
     cor: "#4f6af0",
     grupo: "maquinas",
-    investimento: 708.09,
+    investimento: 828.99,
     leads: [
-      { data: "2026-04-09", count: 3 },
-      { data: "2026-04-10", count: 4 },
-      { data: "2026-04-11", count: 3 },
-      { data: "2026-04-12", count: 3 },
-      { data: "2026-04-13", count: 4 },
-      { data: "2026-04-14", count: 4 },
+      { data: "2026-04-09", count: 2 },
+      { data: "2026-04-10", count: 5 },
+      { data: "2026-04-11", count: 2 },
+      { data: "2026-04-12", count: 4 },
+      { data: "2026-04-13", count: 3 },
+      { data: "2026-04-14", count: 5 },
       { data: "2026-04-17", count: 2 },
       { data: "2026-04-19", count: 1 },
+      { data: "2026-04-29", count: 2 },
+      { data: "2026-04-30", count: 1 },
     ],
   },
   {
@@ -346,7 +360,7 @@ const MAQUINAS = [
     nome: "ULTRACEL",
     cor: "#7c3aed",
     grupo: "maquinas",
-    investimento: 574.93,
+    investimento: 710.92,
     leads: [
       { data: "2026-04-09", count: 5 },
       { data: "2026-04-10", count: 5 },
@@ -356,9 +370,10 @@ const MAQUINAS = [
       { data: "2026-04-14", count: 4 },
       { data: "2026-04-15", count: 2 },
       { data: "2026-04-16", count: 4 },
-      { data: "2026-04-17", count: 6 },
-      { data: "2026-04-18", count: 1 },
+      { data: "2026-04-17", count: 5 },
+      { data: "2026-04-18", count: 2 },
       { data: "2026-04-19", count: 2 },
+      { data: "2026-04-29", count: 6 },
     ],
   },
   {
@@ -366,7 +381,7 @@ const MAQUINAS = [
     nome: "VYDENCE",
     cor: "#f97316",
     grupo: "maquinas",
-    investimento: 257.17,
+    investimento: 298.94,
     leads: [
       { data: "2026-04-09", count: 1 },
       { data: "2026-04-11", count: 2 },
@@ -374,7 +389,33 @@ const MAQUINAS = [
       { data: "2026-04-14", count: 1 },
       { data: "2026-04-16", count: 3 },
       { data: "2026-04-17", count: 1 },
+      { data: "2026-04-29", count: 1 },
+      { data: "2026-04-30", count: 1 },
     ],
+  },
+  {
+    id: "lavieen",
+    nome: "LAVIEEN",
+    cor: "#ec4899",
+    grupo: "maquinas",
+    investimento: 0,
+    leads: [],
+  },
+  {
+    id: "etherea",
+    nome: "ETHEREA",
+    cor: "#10b981",
+    grupo: "maquinas",
+    investimento: 0,
+    leads: [],
+  },
+  {
+    id: "zye",
+    nome: "ZYE",
+    cor: "#f59e0b",
+    grupo: "maquinas",
+    investimento: 0,
+    leads: [],
   },
   {
     id: "franquias",
@@ -390,7 +431,7 @@ const MAQUINAS = [
   },
 ];
 
-const ORCAMENTO_GLOBAL = 1888.60;
+const ORCAMENTO_GLOBAL = 2187.26;
 const MOEDA = "R$";
 
 // ═══════════════════════════════════════════════════
@@ -416,7 +457,7 @@ function calcular(grupo) {
   const datas = [...new Set(lista.flatMap(m => m.leads.map(l => l.data)))].sort();
   const labels = datas.map(d => d.split("-")[2]);
 
-  // Datasets por campanha (barras agrupadas por dia)
+  // Datasets por campanha
   const datasets = lista.map(m => {
     const porDia = Object.fromEntries(m.leads.map(l => [l.data, l.count]));
     return {
@@ -429,7 +470,6 @@ function calcular(grupo) {
     };
   });
 
-  // Última data com lead
   const ultimaData = datas[datas.length - 1] || hoje;
   const [ano, mes, dia] = ultimaData.split("-");
 
@@ -454,26 +494,21 @@ function renderDashboard(grupo) {
   document.getElementById("totalInvestido").textContent = moeda(stats.investimento);
   document.getElementById("cpl").textContent           = moeda(stats.cpl);
 
-  // Cor do total de leads conforme grupo
-  const coresGrupo = { todas: "#4f6af0", maquinas: "#4f6af0", franquias: "#059669" };
+  const coresGrupo = { todas: "#1a1f36", maquinas: "#4f6af0", franquias: "#059669" };
   document.getElementById("totalLeads").style.color = coresGrupo[grupo] || "#4f6af0";
   document.getElementById("cpl").style.color = "#d97706";
 
-  // Saldo
   document.getElementById("saldoRestante").textContent = moeda(0);
   document.getElementById("saldoRestante").style.color = "#9ca3af";
   document.getElementById("saldoSub").textContent = "orçamento encerrado";
 
-  // Título do gráfico
-  const titulos = { todas: "Leads por dia — Todas as campanhas", maquinas: "Leads por dia — Máquinas (QUANTA / ULTRACEL / VYDENCE)", franquias: "Leads por dia — Franquias" };
+  const titulos = { todas: "Leads por dia — Todas as campanhas", maquinas: "Leads por dia — Máquinas", franquias: "Leads por dia — Franquias" };
   document.getElementById("chartTitle").textContent = titulos[grupo];
 
-  // Legenda / botões de filtro do gráfico
   const legenda = document.getElementById("chartLegend");
   const lista = filtrarPorGrupo(grupo);
 
   if (grupo === "maquinas") {
-    // Botões clicáveis para filtrar por máquina
     legenda.innerHTML = lista.map((m, i) =>
       `<button class="filter-btn ativo" data-index="${i}"
          style="background:${m.cor}; border-color:${m.cor}; color:white;">
@@ -497,11 +532,13 @@ function renderDashboard(grupo) {
           btn.querySelector(".dot").style.background = "rgba(255,255,255,0.7)";
         } else {
           btn.classList.replace("ativo", "inativo");
+          btn.style.background = "";
+          btn.style.borderColor = "";
+          btn.style.color = "";
         }
       });
     });
   } else {
-    // Legenda simples para as demais abas
     legenda.innerHTML = lista.map(m =>
       `<div class="legend-item">
          <div class="legend-dot" style="background:${m.cor}"></div>
@@ -510,7 +547,6 @@ function renderDashboard(grupo) {
     ).join("");
   }
 
-  // Gráfico
   if (grafico) grafico.destroy();
   const ctx = document.getElementById("leadsChart").getContext("2d");
   grafico = new Chart(ctx, {
@@ -522,36 +558,21 @@ function renderDashboard(grupo) {
       layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => `  ${ctx.dataset.label}: ${ctx.raw} lead${ctx.raw !== 1 ? "s" : ""}`,
-          },
-        },
+        tooltip: { callbacks: { label: ctx => `  ${ctx.dataset.label}: ${ctx.raw} lead${ctx.raw !== 1 ? "s" : ""}` } },
         datalabels: {
           display: ctx => ctx.raw > 0,
-          anchor: "end",
-          align: "top",
-          offset: 2,
+          anchor: "end", align: "top", offset: 2,
           font: { family: "Inter", size: 10, weight: "700" },
-          color: "#374151",
-          formatter: v => v,
-        },
+          color: "#374151", formatter: v => v
+        }
       },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { family: "Inter", size: 11, weight: "500" }, color: "#6b7280" },
-        },
-        y: {
-          beginAtZero: true,
-          grid: { color: "#f0f2f5" },
-          ticks: { font: { family: "Inter", size: 11 }, color: "#9ca3af", precision: 0 },
-        },
-      },
-    },
+        x: { grid: { display: false }, ticks: { font: { family: "Inter", size: 11, weight: "500" }, color: "#6b7280" } },
+        y: { beginAtZero: true, grid: { color: "#f0f2f5" }, ticks: { font: { family: "Inter", size: 11 }, color: "#9ca3af", precision: 0 } }
+      }
+    }
   });
 
-  // Tabs: estilo ativo
   document.querySelectorAll(".tab").forEach(btn => {
     const ativo = btn.dataset.grupo === grupo;
     btn.classList.toggle("active", ativo);
@@ -564,18 +585,16 @@ function renderDashboard(grupo) {
 //  INICIALIZAÇÃO
 // ═══════════════════════════════════════════════════
 let grupoAtivo = "todas";
-
 document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", () => {
     grupoAtivo = btn.dataset.grupo;
     renderDashboard(grupoAtivo);
   });
 });
-
 renderDashboard(grupoAtivo);
 
 // ═══════════════════════════════════════════════════
-//  UPLOAD E ATUALIZAÇÃO DE DADOS
+//  UPLOAD E PROCESSAMENTO
 // ═══════════════════════════════════════════════════
 function processarArquivo(event) {
   const file = event.target.files[0];
@@ -597,21 +616,17 @@ function processarArquivo(event) {
       }
       atualizarDados(rows);
     } catch(err) {
-      mostrarNotificacao("❌ Erro ao ler o arquivo. Verifique o formato.", "#dc2626");
+      console.error(err);
+      mostrarNotificacao("❌ Erro ao ler o arquivo.", "#dc2626");
     }
   };
 
-  if (ext === "csv") {
-    reader.readAsText(file, "UTF-8");
-  } else {
-    reader.readAsBinaryString(file);
-  }
+  if (ext === "csv") reader.readAsText(file, "UTF-8");
+  else reader.readAsBinaryString(file);
 }
 
 function parsearCSV(texto) {
-  // Remove BOM
   texto = texto.replace(/^﻿/, "");
-  // Detecta separador: ; ou ,
   const sep = texto.split("\n")[0].includes(";") ? ";" : ",";
   return texto.split(/\r?\n/).map(linha => {
     const campos = [];
@@ -627,22 +642,24 @@ function parsearCSV(texto) {
 }
 
 function acharColuna(headers, termos) {
-  return headers.findIndex(h =>
-    termos.some(t => String(h).toLowerCase().includes(t.toLowerCase()))
-  );
+  return headers.findIndex(h => termos.some(t => String(h).toLowerCase().includes(t.toLowerCase())));
 }
 
 function idCampanha(nome) {
   const n = String(nome).toUpperCase();
-  if (n.includes("QUANTA"))   return "quanta";
+  if (n.includes("QUANTA")) return "quanta";
   if (n.includes("ULTRACEL")) return "ultracel";
-  if (n.includes("VYDENCE"))  return "vydence";
-  if (n.includes("FRANQUIA")) return "franquias";
+  if (n.includes("VYDENCE")) return "vydence";
+  if (n.includes("LAVIEEN") || n.includes("LAVIE")) return "lavieen";
+  if (n.includes("ETHEREA")) return "etherea";
+  if (n.includes("ZYE")) return "zye";
+  if (n.includes("FRANQUIA") || n.includes("FRANQUEADO") || n.includes("LC -") || n.includes("GEORREFERENCIADO")) return "franquias";
   return null;
 }
 
 function parsearData(raw) {
-  const s = String(raw).trim();
+  const s = String(raw).trim().toLowerCase();
+  if (!s) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
     const [d, m, a] = s.split("/");
@@ -652,24 +669,29 @@ function parsearData(raw) {
     const [d, m, a] = s.split("/");
     return `20${a}-${m}-${d}`;
   }
+  const meses = { jan: "01", fev: "02", mar: "03", abr: "04", mai: "05", jun: "06", jul: "07", ago: "08", set: "09", out: "10", nov: "11", dez: "12" };
+  const match = s.match(/(\d{1,2})\s+de\s+([a-z]{3})\.?\s+de\s+(\d{4})/);
+  if (match) {
+    const dia = match[1].padStart(2, "0");
+    const mes = meses[match[2]];
+    const ano = match[3];
+    if (mes) return `${ano}-${mes}-${dia}`;
+  }
   return null;
 }
 
 function parsearNumero(raw) {
-  // Suporta 1.234,56 e 1,234.56
   let s = String(raw).replace(/[^\d.,]/g, "");
   if (s.includes(",") && s.includes(".")) {
     if (s.indexOf(",") > s.indexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
     else s = s.replace(/,/g, "");
-  } else if (s.includes(",")) {
-    s = s.replace(",", ".");
-  }
+  } else if (s.includes(",")) s = s.replace(",", ".");
   return parseFloat(s) || 0;
 }
 
 function atualizarDados(rows) {
   if (!rows || rows.length < 2) {
-    mostrarNotificacao("❌ Arquivo vazio ou inválido.", "#dc2626");
+    mostrarNotificacao("❌ Arquivo inválido.", "#dc2626");
     return;
   }
 
@@ -677,14 +699,15 @@ function atualizarDados(rows) {
   const iCampanha = acharColuna(headers, ["campanha","campaign","nome da campanha","nome"]);
   const iValor    = acharColuna(headers, ["valor gasto","amount spent","gasto","investimento","valor"]);
   const iLeads    = acharColuna(headers, ["leads","resultados","conversões","conversoes"]);
-  const iData     = acharColuna(headers, ["data","date","dia","período","periodo"]);
+  const iData     = acharColuna(headers, ["data","date","dia","período","periodo","início","inicio","encerramento"]);
 
   if (iCampanha === -1 || iValor === -1) {
-    mostrarNotificacao("❌ Colunas de campanha e valor não encontradas.", "#dc2626");
+    mostrarNotificacao("❌ Colunas não encontradas.", "#dc2626");
     return;
   }
 
   const acumulado = {};
+  let totalLeadsEncontrados = 0;
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
@@ -695,11 +718,15 @@ function atualizarDados(rows) {
     acumulado[id].investimento += parsearNumero(row[iValor]);
 
     if (iLeads !== -1) {
-      const qtd = parseInt(row[iLeads]) || 0;
-      if (iData !== -1) {
+      const qtdStr = String(row[iLeads]).replace(/[^\d]/g, "");
+      const qtd = parseInt(qtdStr) || 0;
+      if (qtd > 0) {
+        totalLeadsEncontrados += qtd;
         const dt = parsearData(row[iData]);
-        if (dt && qtd > 0) {
-          acumulado[id].leadsPorDia[dt] = (acumulado[id].leadsPorDia[dt] || 0) + qtd;
+        if (dt) acumulado[id].leadsPorDia[dt] = (acumulado[id].leadsPorDia[dt] || 0) + qtd;
+        else {
+          const hoje = new Date().toLocaleDateString("sv-SE");
+          acumulado[id].leadsPorDia[hoje] = (acumulado[id].leadsPorDia[hoje] || 0) + qtd;
         }
       }
     }
@@ -708,52 +735,54 @@ function atualizarDados(rows) {
   let atualizados = 0;
   MAQUINAS.forEach(m => {
     const d = acumulado[m.id];
-    if (!d) return;
-    m.investimento = d.investimento;
-    const dias = Object.entries(d.leadsPorDia);
-    if (dias.length > 0) {
-      m.leads = dias.map(([data, count]) => ({ data, count }));
+    if (d) {
+      m.investimento = d.investimento;
+      m.leads = Object.entries(d.leadsPorDia).map(([data, count]) => ({ data, count }));
+      atualizados++;
+    } else {
+      m.investimento = 0;
+      m.leads = [];
     }
-    atualizados++;
   });
 
   if (atualizados === 0) {
-    mostrarNotificacao("❌ Nenhuma campanha reconhecida (esperado: QUANTA, ULTRACEL, VYDENCE, FRANQUIA).", "#dc2626");
+    mostrarNotificacao("❌ Nenhuma campanha reconhecida.", "#dc2626");
     return;
   }
 
   renderDashboard(grupoAtivo);
-  mostrarNotificacao(`✅ ${atualizados} campanha(s) atualizada(s) com sucesso!`, "#059669");
+  mostrarNotificacao(`✅ Sucesso! ${totalLeadsEncontrados} leads processados.`, "#059669");
+}
+
+function mostrarNotificacao(msg, cor) {
+  const n = document.getElementById("notificacao");
+  n.textContent = msg;
+  n.style.background = cor;
+  n.style.transform = "translateY(0)";
+  setTimeout(() => { n.style.transform = "translateY(-100px)"; }, 3500);
 }
 
 function baixarPDF() {
-  var btn = document.querySelector(".btn-pdf");
+  const btn = document.querySelector(".btn-pdf");
   btn.disabled = true;
-  btn.innerHTML = "⏳&nbsp; Gerando PDF...";
+  btn.innerHTML = "⏳ Gerando PDF...";
 
-  // Overlay cobre a tela durante a captura
-  var overlay = document.createElement("div");
+  const overlay = document.createElement("div");
   overlay.style.cssText = "position:fixed;inset:0;background:#f0f4f8;z-index:9998;display:flex;align-items:center;justify-content:center;";
   overlay.innerHTML = "<div style='font-family:Inter,sans-serif;font-size:1rem;font-weight:600;color:#1a1f36;'>⏳ Gerando PDF, aguarde...</div>";
   document.body.appendChild(overlay);
 
-  var grupoOriginal = grupoAtivo;
-  var el = document.querySelector(".container");
-
-  var opts = {
-    margin: [5, 8, 5, 8],
-    image: { type: "jpeg", quality: 0.97 },
-    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: "#f0f4f8" },
-    jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-  };
+  const grupoOriginal = grupoAtivo;
+  const el = document.querySelector(".container");
+  const opts = { margin: [5, 8, 5, 8], image: { type: "jpeg", quality: 0.97 }, html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: "#f0f4f8" }, jsPDF: { unit: "mm", format: "a4", orientation: "landscape" } };
 
   function ajustarGrafico(modo) {
     if (!grafico) return;
-    var p = modo === "pdf";
-    grafico.options.plugins.datalabels.font.size = p ? 8  : 10;
-    grafico.options.layout.padding.top           = p ? 12 : 24;
-    grafico.options.scales.x.ticks.font.size     = p ? 8  : 11;
-    grafico.options.scales.y.ticks.font.size     = p ? 8  : 11;
+    const p = modo === "pdf";
+    grafico.options.plugins.datalabels.font.size = p ? 8 : 10;
+    grafico.options.layout.padding.top = p ? 12 : 24;
+    grafico.options.scales.x.ticks.font.size = p ? 8 : 11;
+    grafico.options.scales.y.ticks.font.size = p ? 8 : 11;
     grafico.update();
     grafico.resize();
   }
@@ -765,71 +794,33 @@ function baixarPDF() {
     renderDashboard(grupoOriginal);
     if (document.body.contains(overlay)) document.body.removeChild(overlay);
     btn.disabled = false;
-    btn.innerHTML = "📄&nbsp; Baixar em PDF";
+    btn.innerHTML = "📄 Baixar em PDF";
   }
 
-  // ── Página 1: Máquinas ──
   grupoAtivo = "maquinas";
   renderDashboard("maquinas");
   document.body.classList.add("pdf-mode");
   ajustarGrafico("pdf");
 
-  setTimeout(function() {
-    html2pdf()
-      .set(opts)
-      .from(el)
-      .toPdf()
-      .get("pdf")                          // obtém o objeto jsPDF criado internamente
-      .then(function(pdf) {
-        pdf.addPage();                     // adiciona a 2ª página em branco
+  setTimeout(() => {
+    html2pdf().set(opts).from(el).toPdf().get("pdf").then(pdf => {
+      pdf.addPage();
+      document.body.classList.remove("pdf-mode");
+      grupoAtivo = "franquias";
+      renderDashboard("franquias");
+      document.body.classList.add("pdf-mode");
+      ajustarGrafico("pdf");
 
-        // ── Página 2: Franquias ──
-        document.body.classList.remove("pdf-mode");
-        grupoAtivo = "franquias";
-        renderDashboard("franquias");
-        document.body.classList.add("pdf-mode");
-        ajustarGrafico("pdf");
-
-        // Aguarda o gráfico de franquias renderizar
-        return new Promise(function(resolve) {
-          setTimeout(function() {
-            html2pdf()
-              .set(opts)
-              .from(el)
-              .toCanvas()
-              .get("canvas")
-              .then(function(canvas) {
-                var pdfW = pdf.internal.pageSize.getWidth();
-                var pdfH = pdf.internal.pageSize.getHeight();
-                var xMg = 8, yMg = 5;
-                var imgW = pdfW - xMg * 2;
-                var imgH = Math.min((canvas.height / canvas.width) * imgW, pdfH - yMg * 2);
-                pdf.addImage(canvas.toDataURL("image/jpeg", 0.97), "JPEG", xMg, yMg, imgW, imgH);
-                pdf.save("Dashboard_LaserCompanyBrasil.pdf");
-                restaurar();
-                resolve();
-              })
-              .catch(function(e) { console.error("Pág.2:", e); restaurar(); resolve(); });
-          }, 500);
+      setTimeout(() => {
+        html2pdf().set(opts).from(el).toCanvas().get("canvas").then(canvas => {
+          const imgData = canvas.toDataURL("image/jpeg", 0.97);
+          pdf.addImage(imgData, "JPEG", 8, 5, 280, 0);
+          pdf.save("Dashboard-Laser-Company.pdf");
+          restaurar();
         });
-      })
-      .catch(function(e) { console.error("Pág.1:", e); restaurar(); });
-  }, 500);
-}
-
-function mostrarNotificacao(msg, cor = "#059669") {
-  const n = document.createElement("div");
-  n.textContent = msg;
-  n.style.cssText = `
-    position:fixed; top:22px; right:22px; z-index:9999;
-    background:${cor}; color:white; padding:14px 22px;
-    border-radius:12px; font-weight:600; font-size:0.88rem;
-    box-shadow:0 4px 20px rgba(0,0,0,0.22);
-    max-width:340px; line-height:1.4;
-    animation:slideIn 0.3s ease;
-  `;
-  document.body.appendChild(n);
-  setTimeout(() => n.remove(), 3500);
+      }, 800);
+    });
+  }, 800);
 }
 </script>
 </body>
