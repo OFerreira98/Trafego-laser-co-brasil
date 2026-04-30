@@ -226,6 +226,64 @@
       .cards-grid .card:last-child { grid-column: 1 / -1; }
     }
 
+    /* ── Saldo editável ── */
+    #cardSaldo.editavel {
+      cursor: pointer;
+      border: 2px dashed #c7d2fe;
+    }
+    #cardSaldo.editavel:hover {
+      border-color: #4f6af0;
+      background: #f5f7ff;
+    }
+    .card-edit-hint {
+      display: none;
+      font-size: 0.68rem;
+      color: #a5b4fc;
+      margin-top: 6px;
+    }
+    #cardSaldo.editavel .card-edit-hint { display: block; }
+
+    /* ── Modal saldo ── */
+    #modalSaldo {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 10001;
+      align-items: center;
+      justify-content: center;
+    }
+    #modalSaldo.aberto { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 16px;
+      padding: 28px 28px 24px;
+      width: 320px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      animation: slideIn 0.2s ease;
+    }
+    .modal-title { font-size: 1rem; font-weight: 700; color: #1a1f36; margin-bottom: 5px; }
+    .modal-sub   { font-size: 0.78rem; color: #9ca3af; margin-bottom: 16px; }
+    .modal-input {
+      width: 100%; padding: 12px 14px;
+      border: 2px solid #e2e8f0; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 1rem; color: #1a1f36;
+      outline: none; transition: border-color 0.15s;
+    }
+    .modal-input:focus { border-color: #4f6af0; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-btn-cancel {
+      flex: 1; padding: 11px; border: 2px solid #e2e8f0; border-radius: 10px;
+      background: white; font-family: 'Inter', sans-serif; font-size: 0.9rem;
+      font-weight: 600; color: #6b7280; cursor: pointer; transition: background 0.15s;
+    }
+    .modal-btn-cancel:hover { background: #f9fafb; }
+    .modal-btn-save {
+      flex: 1; padding: 11px; border: none; border-radius: 10px;
+      background: #4f6af0; font-family: 'Inter', sans-serif; font-size: 0.9rem;
+      font-weight: 600; color: white; cursor: pointer; transition: background 0.15s;
+    }
+    .modal-btn-save:hover { background: #3b55d4; }
+
     /* ── Notificação ── */
     #notificacao {
       position: fixed; top: 20px; right: 20px;
@@ -239,6 +297,19 @@
 </head>
 <body>
 <div id="notificacao"></div>
+
+<!-- Modal saldo manual -->
+<div id="modalSaldo">
+  <div class="modal-box">
+    <div class="modal-title">💳 Saldo Restante</div>
+    <div class="modal-sub">Informe o valor disponível no orçamento. Deixe vazio para remover.</div>
+    <input id="inputSaldo" class="modal-input" type="text" placeholder="Ex: 1.500,00">
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="cancelarSaldo()">Cancelar</button>
+      <button class="modal-btn-save" onclick="confirmarSaldo()">Salvar</button>
+    </div>
+  </div>
+</div>
 <div class="container">
 
   <!-- Header -->
@@ -283,11 +354,12 @@
       <div class="card-value" id="totalInvestido">—</div>
       <div class="card-sub">na campanha</div>
     </div>
-    <div class="card">
+    <div class="card" id="cardSaldo">
       <div class="card-icon">💳</div>
       <div class="card-label">Saldo Restante</div>
       <div class="card-value" id="saldoRestante">—</div>
       <div class="card-sub" id="saldoSub">—</div>
+      <div class="card-edit-hint">✏️ clique para editar</div>
     </div>
     <div class="card">
       <div class="card-icon">📊</div>
@@ -428,9 +500,17 @@ function carregarLocalStorage() {
       });
     } catch(e) { console.error("Erro ao carregar dados salvos", e); }
   }
+  const saldoSalvo = localStorage.getItem("LASER_SALDO_MANUAL");
+  if (saldoSalvo !== null) saldoManual = parseFloat(saldoSalvo);
+}
+
+function salvarSaldo() {
+  if (saldoManual !== null) localStorage.setItem("LASER_SALDO_MANUAL", saldoManual);
+  else localStorage.removeItem("LASER_SALDO_MANUAL");
 }
 
 const MOEDA = "R$";
+let saldoManual = null;
 
 // ═══════════════════════════════════════════════════
 //  CÁLCULOS
@@ -496,9 +576,24 @@ function renderDashboard(grupo) {
   document.getElementById("totalLeads").style.color = coresGrupo[grupo] || "#4f6af0";
   document.getElementById("cpl").style.color = "#d97706";
 
-  document.getElementById("saldoRestante").textContent = moeda(0);
-  document.getElementById("saldoRestante").style.color = "#9ca3af";
-  document.getElementById("saldoSub").textContent = "orçamento encerrado";
+  const cardSaldo = document.getElementById("cardSaldo");
+  if (grupo === "todas") {
+    cardSaldo.classList.add("editavel");
+    if (saldoManual !== null) {
+      document.getElementById("saldoRestante").textContent = moeda(saldoManual);
+      document.getElementById("saldoRestante").style.color = saldoManual > 0 ? "#059669" : "#dc2626";
+      document.getElementById("saldoSub").textContent = "saldo manual";
+    } else {
+      document.getElementById("saldoRestante").textContent = "—";
+      document.getElementById("saldoRestante").style.color = "#9ca3af";
+      document.getElementById("saldoSub").textContent = "clique para definir";
+    }
+  } else {
+    cardSaldo.classList.remove("editavel");
+    document.getElementById("saldoRestante").textContent = moeda(0);
+    document.getElementById("saldoRestante").style.color = "#9ca3af";
+    document.getElementById("saldoSub").textContent = "orçamento encerrado";
+  }
 
   const titulos = { todas: "Leads por dia — Todas as campanhas", maquinas: "Leads por dia — Máquinas", franquias: "Leads por dia — Franquias" };
   document.getElementById("chartTitle").textContent = titulos[grupo];
@@ -592,6 +687,49 @@ document.querySelectorAll(".tab").forEach(btn => {
 
 carregarLocalStorage(); // Carrega dados salvos
 renderDashboard(grupoAtivo);
+
+// ═══════════════════════════════════════════════════
+//  SALDO MANUAL
+// ═══════════════════════════════════════════════════
+document.getElementById("cardSaldo").addEventListener("click", () => {
+  if (grupoAtivo !== "todas") return;
+  const input = document.getElementById("inputSaldo");
+  input.value = saldoManual !== null
+    ? saldoManual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+    : "";
+  document.getElementById("modalSaldo").classList.add("aberto");
+  setTimeout(() => input.focus(), 50);
+});
+
+document.getElementById("inputSaldo").addEventListener("keydown", e => {
+  if (e.key === "Enter") confirmarSaldo();
+  if (e.key === "Escape") cancelarSaldo();
+});
+
+document.getElementById("modalSaldo").addEventListener("click", e => {
+  if (e.target === e.currentTarget) cancelarSaldo();
+});
+
+function confirmarSaldo() {
+  const raw = document.getElementById("inputSaldo").value.trim();
+  if (raw === "") {
+    saldoManual = null;
+  } else {
+    const valor = parsearNumero(raw);
+    saldoManual = isNaN(valor) ? null : valor;
+  }
+  salvarSaldo();
+  document.getElementById("modalSaldo").classList.remove("aberto");
+  renderDashboard(grupoAtivo);
+  mostrarNotificacao(
+    saldoManual !== null ? `✅ Saldo definido: ${moeda(saldoManual)}` : "✅ Saldo removido.",
+    "#059669"
+  );
+}
+
+function cancelarSaldo() {
+  document.getElementById("modalSaldo").classList.remove("aberto");
+}
 
 // ═══════════════════════════════════════════════════
 //  UPLOAD E PROCESSAMENTO
